@@ -8,9 +8,14 @@ import { combineRoutes } from "./routes/combineRoutes.js";
 // Express App and Router //
 const app = express();
 const router = Router();
-
+// SocketIO setup //
 const server = HTTP.createServer(app);
-const socketIOInstance = new SocketServer(server);
+const socketIOInstance = new SocketServer(server, { cors: { origin: "http://localhost:3000"} });
+
+socketIOInstance.on("connection", (socket) => {
+  console.log("a user connected");
+  console.log(socket);
+})
 //
 // set up routes //
 
