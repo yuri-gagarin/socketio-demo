@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Grid, Paper } from "@mui/material";
+import { Button, ButtonGroup, Grid, Paper } from "@mui/material";
 import { styled } from '@mui/material/styles';
 //
 import { UserBar } from "./UserBar";
@@ -25,7 +25,12 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
         </Item>
       </Grid>
       <Grid item lg={6} xs={12}>
-        <Item style={{ minHeight: "100px" }}>6</Item>
+        <Item style={{ minHeight: "100px" }}>
+          <ButtonGroup>
+            <Button>Connect</Button>
+            <Button>Disconnect</Button>
+          </ButtonGroup>
+        </Item>
       </Grid>
       <Grid item lg={6} xs={12}>
         <Item style={{ minHeight: "100px" }}>6</Item>
