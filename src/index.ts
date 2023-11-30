@@ -5,17 +5,46 @@ import { Server as SocketServer } from "socket.io";
 import dotenv from "dotenv";
 dotenv.config();
 import { combineRoutes } from "./routes/combineRoutes.js";
+import type { ClientToServerEvents, ServerToClientEvents } from "./types/socketTypes.js";
 // Express App and Router //
 const app = express();
 const router = Router();
 // SocketIO setup //
 const server = HTTP.createServer(app);
-const socketIOInstance = new SocketServer(server, { cors: { origin: "http://localhost:3000"} });
+const socketIOInstance = new SocketServer<ClientToServerEvents, ServerToClientEvents, any>(server, { cors: { origin: "http://localhost:3000"} });
+
+const socketIDs: string[] = [];
+
+enum SocketListeners {
+  NewMessage = "NEW_MESSAGE",
+  MessageReceived = "MESSAGE_RECEIVED"
+}
+enum SocketEmitters {
+  NewUserConnected = "NEW_USER_CONNECTED",
+  SendMsgToClient = "SEND_MSG_TO_CLIENT",
+  ConfirmReceivedMsg = "CONFIRM_RECEIVED_MSG"
+}
+
 
 socketIOInstance.on("connection", (socket) => {
-  console.log("a user connected");
-  console.log(socket);
-})
+  socketIDs.push(socket.id);
+  socketIOInstance.emit(
+    "newUserConnected", 
+    { 
+      userSocketId: socket.id,
+      message: "A new user connected", 
+      connectedSockets: socketIDs,
+      numOfConnections: socketIDs.length,
+    });
+  //
+});
+
+socketIOInstance.on("", (data: NewMessageData) => {
+  socketIOInstance.to(data.receiverSocketId).emit(SocketEmitters.SendMsgToClient, data);
+});
+socketIOInstance.on(SocketListeners.NewMessage, (data: MsgReceivedData) => {
+  socketIOInstance.to(data.sentFromSocketId).emit(SocketEmitters.ConfirmReceivedMsg, data);
+});
 //
 // set up routes //
 
