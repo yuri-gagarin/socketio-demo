@@ -11,22 +11,11 @@ const app = express();
 const router = Router();
 // SocketIO setup //
 const server = HTTP.createServer(app);
-const socketIOInstance = new SocketServer<ClientToServerEvents, ServerToClientEvents, any>(server, { cors: { origin: "http://localhost:3000"} });
+const socketIOInstance = new SocketServer<ClientToServerEvents, ServerToClientEvents>(server, { cors: { origin: "http://localhost:3000"} });
 
 const socketIDs: string[] = [];
 
-enum SocketListeners {
-  NewMessage = "NEW_MESSAGE",
-  MessageReceived = "MESSAGE_RECEIVED"
-}
-enum SocketEmitters {
-  NewUserConnected = "NEW_USER_CONNECTED",
-  SendMsgToClient = "SEND_MSG_TO_CLIENT",
-  ConfirmReceivedMsg = "CONFIRM_RECEIVED_MSG"
-}
-
-
-socketIOInstance.on("connection", (socket) => {
+socketIOInstance.on("connection",(socket) => {
   socketIDs.push(socket.id);
   socketIOInstance.emit(
     "newUserConnected", 
@@ -37,20 +26,56 @@ socketIOInstance.on("connection", (socket) => {
       numOfConnections: socketIDs.length,
     });
   //
+  socket.on("sendNewNessage", (data) => {
+    socketIOInstance.to(data.receiverSocketId).emit("receiveNewMessage", data);
+  });
+  socket.on("sendMsgReceived", (data) => {
+    socketIOInstance.to(data.sentFromSocketId).emit("confirmReceivedMsg", data);
+  });
+  socket.on("sendReadReceipt", (data) => {
+    socket.to(data.sendToSocketId).emit("receiveReadReceipt", data);
+  });
+  socket.on("sendJoinRoom", async (data) => {
+    const { clientSocketId, roomId } = data;
+    socket.join(roomId);
+    if (socketIOInstance.sockets.adapter.rooms.get(roomId)) {
+      const roomSize = socketIOInstance.sockets.adapter.rooms.get(roomId)!.size;
+      socketIOInstance.to(clientSocketId).emit(
+        "roomJoinSuccess", 
+        { 
+          message: "Room joined", 
+          roomId,
+          clientSocketId, 
+          roomSize,
+          errors: null
+        }
+      );
+    } else {
+      const errors = [`Room name ${data.roomId} could not be resolved`, "Room not joined"];
+      socketIOInstance.to(data.clientSocketId).emit(
+        "roomJoinFailure",
+        {
+          message: "Room not joined",
+          roomId,
+          clientSocketId,
+          roomSize: 0,
+          errors
+        }
+      );
+    }
+  });
 });
 
-socketIOInstance.on("", (data: NewMessageData) => {
-  socketIOInstance.to(data.receiverSocketId).emit(SocketEmitters.SendMsgToClient, data);
+/*
+socketIOInstance.on("dd", (data) => {
+  socketIOInstance.to(data.receiverSocketId).emit("sendMsgToClient", data);
 });
-socketIOInstance.on(SocketListeners.NewMessage, (data: MsgReceivedData) => {
-  socketIOInstance.to(data.sentFromSocketId).emit(SocketEmitters.ConfirmReceivedMsg, data);
+socketIOInstance.on("", (data) => {
+  socketIOInstance.to(data.sentFromSocketId).emit("confirmReceivedMsg", data);
 });
-//
+*/
 // set up routes //
 
-router.get("/s", (req, res) => {
-  return res.status(200).json("ok")
-});
 app.use(combineRoutes(router));
 
 const PORT: number = Number(process.env.PORT) || 8000;

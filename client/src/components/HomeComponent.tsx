@@ -32,7 +32,7 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
 
   React.useEffect(() => {
     if (socketState) {
-      socketState.on(SocketListeners.NewUserConnected, (data: ) => {
+      socketState.on(SocketListeners.NewUserConnected, (data) => {
         console.log(data);
       })
     }
