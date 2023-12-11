@@ -1,4 +1,7 @@
 import { v1 }from "uuid";
+import { faker } from "@faker-js/faker";
+// types //
+import type { MsgData } from "../../types/messageType";
 
 export const genMockUsers = (numToGenerate: number): string[] => {
   const users: string[] = [];
@@ -6,6 +9,19 @@ export const genMockUsers = (numToGenerate: number): string[] => {
     users.push(v1());
   }
   return users;
+}
+
+export const getMockMessages = (numToGenerate: number): MsgData[] => {
+  const messages: MsgData[] = [];
+  for (let i = 0; i < numToGenerate; i++) {
+    messages.push({ 
+      id: v1(), 
+      content: faker.lorem.words(Math.ceil(Math.random() * 10)),
+      senderSocketId: v1(),
+      receiverSocketId: v1()
+    });
+  }
+  return messages;
 }
 
 export const setColor = (colorIndex: number, colorArr?: string[]): string => {

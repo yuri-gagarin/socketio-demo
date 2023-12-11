@@ -9,7 +9,8 @@ import { UserBar } from "./UserBar";
 // ts types and constants //
 import { SocketEmitters, SocketListeners } from "./helpers/socketTypes";
 // helpers, mock data //
-import { genMockUsers } from "./helpers/mockData";
+import { genMockUsers, getMockMessages } from "./helpers/mockData";
+import { MessengerComponent } from "./messages/MessengerComponent";
  
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -52,6 +53,9 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
   }
   const handleJoinRoom = (): void => {
 
+  }
+  const handleLeaveRoom = (): void => {
+    
   }
 
   // lifecycle methods //
@@ -98,12 +102,11 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
               Join Room 
             </Button>
           </ButtonGroup>
-      
         </Item>
       </Grid>
       <Grid item lg={6} xs={12}>
         <Item style={{ minHeight: "100px" }}>
-         
+          <MessengerComponent messages={getMockMessages(10)} />
         </Item>
       </Grid>
       <Grid item lg={6} xs={12}>
