@@ -5,7 +5,8 @@ import { Server as SocketServer } from "socket.io";
 import dotenv from "dotenv";
 dotenv.config();
 import { combineRoutes } from "./routes/combineRoutes.js";
-import type { ClientToServerEvents, ServerToClientEvents } from "./types/socketTypes.js";
+import type { ClientToServerEvents, ServerToClientEvents, RoomData } from "./types/socketTypes.js";
+import { checkNewRoom } from "./helpers/dataHelpers.js";
 // Express App and Router //
 const app = express();
 const router = Router();
@@ -13,18 +14,24 @@ const router = Router();
 const server = HTTP.createServer(app);
 const socketIOInstance = new SocketServer<ClientToServerEvents, ServerToClientEvents>(server, { cors: { origin: "http://localhost:3000"} });
 
-const socketIDs: string[] = [];
+let connectedSockets: string[] = [];
+let numOfConnections: number = 0;
+
+let activeRooms: RoomData[] = []; //  what potential problems are there with this approach ? 
 
 socketIOInstance.on("connection",(socket) => {
-  socketIDs.push(socket.id);
+  const { id: userSocketId } = socket;
+  connectedSockets.push(userSocketId);
+  numOfConnections += 1;
   socketIOInstance.emit(
     "newUserConnected", 
     { 
-      userSocketId: socket.id,
       message: "A new user connected", 
-      connectedSockets: socketIDs,
-      numOfConnections: socketIDs.length,
-    });
+      userSocketId, 
+      connectedSockets, 
+      numOfConnections 
+    }
+  );
   //
   socket.on("sendNewNessage", (data) => {
     socketIOInstance.to(data.receiverSocketId).emit("receiveNewMessage", data);
@@ -35,11 +42,36 @@ socketIOInstance.on("connection",(socket) => {
   socket.on("sendReadReceipt", (data) => {
     socket.to(data.sendToSocketId).emit("receiveReadReceipt", data);
   });
+
+  // room functionality //
   socket.on("sendJoinRoom", async (data) => {
     const { clientSocketId, roomId } = data;
     socket.join(roomId);
     if (socketIOInstance.sockets.adapter.rooms.get(roomId)) {
-      const roomSize = socketIOInstance.sockets.adapter.rooms.get(roomId)!.size;
+      if (checkNewRoom({ roomId, activeRooms })) {
+        let newRoomData: RoomData = {
+          roomId, 
+          startedBy: clientSocketId, 
+          connectedSockets: [ clientSocketId ], 
+          numOfUsers: 0, 
+          messages: [],
+          private: false
+        }
+        activeRooms.push(newRoomData);
+      } else {
+        activeRooms = activeRooms.map((roomData) => {
+          if (roomData.roomId === roomId) {
+            return {
+              ...roomData,
+              connectedSockets: [ ...roomData.connectedSockets, clientSocketId ],
+              numOfUsers: roomData.numOfUsers + 1,
+            }
+          } else {
+            return roomData;
+          }
+        });
+      }
+      const roomSize = socketIOInstance.sockets.adapter.rooms.get(roomId)?.size || 0;
       socketIOInstance.to(clientSocketId).emit(
         "roomJoinSuccess", 
         { 
@@ -63,6 +95,22 @@ socketIOInstance.on("connection",(socket) => {
         }
       );
     }
+  });
+  socket.on("disconnect", (data) => {
+    console.log("Socket disconnection");
+    console.log(data);
+    const { id: userSocketId } = socket;
+    connectedSockets = connectedSockets.filter((id) => id !== userSocketId);
+    numOfConnections -= 1;
+    socketIOInstance.emit(
+      "userDisconnected", 
+      { 
+        message: "User disconnected", 
+        userSocketId,
+        connectedSockets,
+        numOfConnections 
+      }
+    );
   });
 });
 

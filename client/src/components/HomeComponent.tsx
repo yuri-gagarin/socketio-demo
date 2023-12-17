@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Button, ButtonGroup, Grid, Paper } from "@mui/material";
+import { Button, ButtonGroup, Grid, Paper } from "@mui/material";
 import { CompassCalibrationSharp, ClearSharp, Room } from "@mui/icons-material";
 import { styled } from '@mui/material/styles';
 // 
@@ -7,7 +7,7 @@ import { io, Socket } from "socket.io-client";
 //
 import { UserBar } from "./UserBar";
 // ts types and constants //
-import { SocketEmitters, SocketListeners } from "./helpers/socketTypes";
+import type { IServerToClient, IClientToServer, NewConnectionData, MessageData } from "../types/socketTypes";
 // helpers, mock data //
 import { genMockUsers, getMockMessages } from "./helpers/mockData";
 import { MessengerComponent } from "./messages/MessengerComponent";
@@ -24,21 +24,37 @@ const Item = styled(Paper)(({ theme }) => ({
 interface IHomeComponentProps {
   // nothing yet //
 }
+type MessageState = {
+  roomId: string;
+  messages: MessageData[];
+}
 type HomeComponentState = {
   status: "connected" | "disconnected";
-  socket: Socket | null;
+  mySocketId: string;
+  socket: Socket<IServerToClient, IClientToServer> | null;
+}
+type UserConnState = {
+  message: string;
+  connectedUsers: string[];
+  numOfConnections: number;
 }
 
 export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
   const [ socketState, setSocketState ] = React.useState<HomeComponentState>({
     status: "disconnected",
+    mySocketId: "",
     socket: null
   });
+  const [ connectedUsers, setConnectedUsers ] = React.useState<UserConnState>({
+    message: "", connectedUsers: [], numOfConnections: 0
+  });
 
+  // event handlers //
+  // SocketIO connect and disconnect //
   const handleIOconnect = (): void => {
-    const socket = io("http://localhost:8000");
+    const socket: Socket<IClientToServer, IServerToClient> = io("http://localhost:8000");
     if (socket.connected) {
-      setSocketState({ status: "connected", socket });
+      setSocketState({ status: "connected", mySocketId: socket.id, socket, });
     } else {
       console.log("not connected")
     }
@@ -47,7 +63,7 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
     if (socketState.status === "connected" && socketState.socket) {
       socketState.socket.disconnect();
       setSocketState({
-        status: "disconnected", socket: null
+        status: "disconnected", mySocketId: "", socket: null
       });
     }
   }
@@ -58,15 +74,28 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
     
   }
 
+  const handleReceiveNewMessage = (data: MessageData) => {
+    
+  }
+  const handleNewUser = (data: NewConnectionData): void => {
+    setConnectedUsers((prevState) => ({  
+      message: data.message, connectedUsers: [ ...prevState.connectedUsers, data.userSocketId], numOfConnections: data.numOfConnections
+    }));
+  }
+  
+
   // lifecycle methods //
   React.useEffect(() => {
     if (socketState.status === "connected" && socketState.socket) {
-      socketState.socket.on(SocketListeners.NewUserConnected, (data) => {
-        console.log(data);
-      });
+      socketState.socket.on("newUserConnected", handleNewUser);
+    }
+
+    return () => {
+      cleanupSocketListeners(socketState);
     }
   }, [ socketState ]);
 
+ 
   return (
     <Grid container spacing={2}>
       <Grid item lg={12} sx={{ border: "3px solid green", width: "100%"}}>
@@ -120,4 +149,12 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
       </Grid>
     </Grid>
   )
+}
+
+function cleanupSocketListeners(socketState: HomeComponentState) {
+  if (socketState.socket) {
+    socketState.socket.off("connectionSuccess");
+    socketState.socket.off("connect_error");
+    socketState.socket.off("newUserConnected");
+  }
 }

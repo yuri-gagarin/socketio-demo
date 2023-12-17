@@ -1,29 +1,29 @@
-type Connectiondata = {
+export type NewConnectionData = {
   message: string;
   userSocketId: string;
   connectedSockets: string[];
   numOfConnections: number;
 }
-type MessageData = {
+export type MessageData = {
   messageid: string;
   receiverSocketId: string;
   senderSocketId: string;
   messageData: string;
 }
-type MsgReceivedData = {
+export type MsgReceivedData = {
   receivedBySocketId: string;
   sentFromSocketId: string;
 }
-type ReadReceiptData = {
+export type ReadReceiptData = {
   readBySocketId: string;
   sendToSocketId: string;
   messageId: string;
 }
-type JoinRoomData = {
+export type JoinRoomData = {
   clientSocketId: string;
   roomId: string;
 }
-type RoomJoinData = {
+export type RoomJoinData = {
   message: string;
   clientSocketId: string;
   roomId: string;
@@ -31,32 +31,19 @@ type RoomJoinData = {
   errors: string[] | null;
 }
 
-export type RoomData = {
-  roomId: string;
-  startedBy: string;
-  connectedSockets: string[];
-  numOfUsers: number;
-  messages: MessageData[];
-  private: boolean;
+export interface IClientToServer {
+  sendNewNessage: (data: MessageData) => void;
+  sendMsgReceived: (data: MsgReceivedData) => void;
+  sendReadReceipt: (data: ReadReceiptData) => void;
+  sendJoinRoom: (data: JoinRoomData) => void;
 }
-
-
-export interface ServerToClientEvents {
+export interface IServerToClient {
   noArg: () => void;
   connectionSuccess: (data: any) => void;
-  newUserConnected: (data : Connectiondata) => void;
-  userDisconnected: (data: Connectiondata) => void;
+  newUserConnected: (data : NewConnectionData) => void;
   receiveNewMessage: (data: MessageData) => void;
   confirmReceivedMsg: (data: MsgReceivedData) => void;
   receiveReadReceipt: (data: ReadReceiptData) => void;
   roomJoinSuccess: (data: RoomJoinData) => void;
   roomJoinFailure: (data: RoomJoinData) => void;
 }
-
-export interface ClientToServerEvents {
-  sendNewNessage: (data: MessageData) => void;
-  sendMsgReceived: (data: MsgReceivedData) => void;
-  sendReadReceipt: (data: ReadReceiptData) => void;
-  sendJoinRoom: (data: JoinRoomData) => void;
-}
-
