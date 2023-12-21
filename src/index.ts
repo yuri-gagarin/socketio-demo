@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import { combineRoutes } from "./routes/combineRoutes.js";
 import type { ClientToServerEvents, ServerToClientEvents, RoomData } from "./types/socketTypes.js";
-import { checkNewRoom } from "./helpers/dataHelpers.js";
+import { checkNewRoom, updateRoomData } from "./helpers/dataHelpers.js";
 // Express App and Router //
 const app = express();
 const router = Router();
@@ -96,6 +96,12 @@ socketIOInstance.on("connection",(socket) => {
       );
     }
   });
+
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((roomId) => {
+      updateRoomData({ roomId, activeRooms, socketId: socket.id });
+    });
+  })
   socket.on("disconnect", (data) => {
     console.log("Socket disconnection");
     console.log(data);

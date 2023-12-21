@@ -1,6 +1,6 @@
 import React from "react";
-import { Button, ButtonGroup, Grid, Paper } from "@mui/material";
-import { CompassCalibrationSharp, ClearSharp, Room } from "@mui/icons-material";
+import { Box, Button, ButtonGroup, Grid, Paper } from "@mui/material";
+import { CompassCalibrationSharp, ClearSharp,} from "@mui/icons-material";
 import { styled } from '@mui/material/styles';
 // 
 import { io, Socket } from "socket.io-client";
@@ -11,6 +11,7 @@ import type { IServerToClient, IClientToServer, NewConnectionData, MessageData }
 // helpers, mock data //
 import { genMockUsers, getMockMessages } from "./helpers/mockData";
 import { MessengerComponent } from "./messages/MessengerComponent";
+import { RoomSelector } from "./rooms/RoomSelector";
  
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -121,16 +122,9 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
               Disconnect
             </Button>
           </ButtonGroup>
-          <ButtonGroup>
-            <Button 
-              variant="contained" 
-              startIcon={<Room/>} 
-              color="primary"  
-              onClick={handleJoinRoom}
-            >
-              Join Room 
-            </Button>
-          </ButtonGroup>
+        </Item>
+        <Item>
+          <RoomSelector handleJoinRoom={handleJoinRoom} />
         </Item>
       </Grid>
       <Grid item lg={6} xs={12}>
