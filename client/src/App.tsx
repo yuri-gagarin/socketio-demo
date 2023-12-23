@@ -8,7 +8,7 @@ import { HomeComponent } from "./components/HomeComponent";
 
 function App() {
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, border: "3px solid green" }}>
       <HomeComponent />
     </Box>  
   );

@@ -1,26 +1,32 @@
 import React from "react";
-import { Box, Button, ButtonGroup, Grid, Paper } from "@mui/material";
-import { CompassCalibrationSharp, ClearSharp,} from "@mui/icons-material";
+import { Grid, Paper } from "@mui/material";
 import { styled } from '@mui/material/styles';
 // 
 import { io, Socket } from "socket.io-client";
 //
+import { ConnectionNav } from "./navs/ConnectionNav";
+import { ConnectedRooms } from "./rooms/ConnectedRooms";
+import { MessengerComponent } from "./messages/MessengerComponent";
+import { RoomSelector } from "./rooms/RoomSelector";
 import { UserBar } from "./UserBar";
 // ts types and constants //
 import type { IServerToClient, IClientToServer, NewConnectionData, MessageData } from "../types/socketTypes";
 // helpers, mock data //
 import { genMockUsers, getMockMessages } from "./helpers/mockData";
-import { MessengerComponent } from "./messages/MessengerComponent";
-import { RoomSelector } from "./rooms/RoomSelector";
+
  
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
   ...theme.typography.body2,
-  width: "100%",
+  //width: "100%",
   padding: theme.spacing(1),
   textAlign: 'center',
   color: theme.palette.text.secondary,
 }));
+
+const clientConnected = (state: HomeComponentState): boolean => {
+  return (state.mySocketId && state.socket && state.status === "connected") ? true : false;
+}
 
 interface IHomeComponentProps {
   // nothing yet //
@@ -41,6 +47,7 @@ type UserConnState = {
 }
 
 export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
+  // local state //
   const [ socketState, setSocketState ] = React.useState<HomeComponentState>({
     status: "disconnected",
     mySocketId: "",
@@ -61,18 +68,30 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
     }
   }
   const handleIODisconnect = (): void => {
-    if (socketState.status === "connected" && socketState.socket) {
-      socketState.socket.disconnect();
+    if (clientConnected(socketState)) {
+      socketState.socket!.disconnect();
       setSocketState({
         status: "disconnected", mySocketId: "", socket: null
       });
     }
   }
-  const handleJoinRoom = (): void => {
-
+  const handleJoinRoom = (roomId: string): void => {
+    if (clientConnected(socketState)) {
+      const clientSocketId = socketState.socket!.id;
+      socketState.socket!.emit("sendJoinRoom", { roomId, clientSocketId });
+    } else {
+      // show connection error //
+      console.log("not connected");
+    }
   }
-  const handleLeaveRoom = (): void => {
-    
+  const handleLeaveRoom = (roomId: string): void => {
+    if (clientConnected(socketState)) {
+      const { id: clientSocketId } = socketState.socket!;
+      socketState.socket!.emit("sendLeaveRoom", { roomId, clientSocketId });
+    } else {
+      // show connection error //
+      console.log("not connected");
+    }
   }
 
   const handleReceiveNewMessage = (data: MessageData) => {
@@ -99,44 +118,35 @@ export const HomeComponent: React.FC<IHomeComponentProps> = (): JSX.Element => {
  
   return (
     <Grid container spacing={2}>
-      <Grid item lg={12} sx={{ border: "3px solid green", width: "100%"}}>
+      <Grid item lg={12} sx={{ width: "100%"}}>
         <Item sx={{ border: "3px solid red" }}>
           <UserBar loggedInUsers={genMockUsers(25)} /> 
         </Item>
         <Item sx={{ border: "3px solid red", alignContent: "flex-start" }}>
-          <ButtonGroup>
-            <Button
-              variant="contained" 
-              startIcon={<CompassCalibrationSharp />}
-              color="primary"
-              onClick={handleIOconnect}
-            >
-              Connect
-            </Button>
-            <Button 
-              sx={{ color: "orange" }}
-              variant="outlined" 
-              endIcon={<ClearSharp color="warning" />}
-              onClick={handleIODisconnect} 
-            >
-              Disconnect
-            </Button>
-          </ButtonGroup>
+          <ConnectionNav
+            handleIOConnect={handleIOconnect}
+            handleIODisconnect={handleIODisconnect}
+          />
         </Item>
         <Item>
           <RoomSelector handleJoinRoom={handleJoinRoom} />
         </Item>
       </Grid>
       <Grid item lg={6} xs={12}>
-        <Item style={{ minHeight: "100px" }}>
-          <MessengerComponent messages={getMockMessages(10)} />
+        <Item style={{ height: "400px" }}>
+          <MessengerComponent 
+            messages={getMockMessages(10)} 
+          />
         </Item>
       </Grid>
       <Grid item lg={6} xs={12}>
-        <Item style={{ minHeight: "100px" }}>6</Item>
-        <Paper>
-          Message
-        </Paper>
+        <Item style={{ minHeight: "400px" }}>
+          <ConnectedRooms 
+            myRooms={[]} 
+            handleLeaveRoom={handleLeaveRoom}
+          />
+        </Item>
+       
       </Grid>
       <Grid item lg={12}>
         <Item>8</Item>

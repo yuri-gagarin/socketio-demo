@@ -23,6 +23,7 @@ const defaultRooms = [
   "Movies"
 ];
 
+/*
 function getStyles(name: string, personName: string[], theme: Theme) {
   return {
     fontWeight:
@@ -31,40 +32,36 @@ function getStyles(name: string, personName: string[], theme: Theme) {
         : theme.typography.fontWeightMedium,
   };
 }
+*/
 
 interface IRoomSelectorProps {
-  handleJoinRoom: () => void;
+  handleJoinRoom: (roomId: string) => void;
 }
 
 export const RoomSelector: React.FC<IRoomSelectorProps> = ( { handleJoinRoom }) => {
   const theme = useTheme();
-  const [personName, setPersonName] = React.useState<string[]>([]);
+  const [roomID, setRoomID] = React.useState<string>("");
 
-  const handleChange = (event: SelectChangeEvent<typeof personName>) => {
-    const {
-      target: { value },
-    } = event;
-    setPersonName(
-      // On autofill we get a stringified value.
-      typeof value === 'string' ? value.split(',') : value,
-    );
+  const handleChange = (event: SelectChangeEvent<typeof roomID>) => {
+    const { target: { value }, } = event;
+    setRoomID(value);
   };
 
   return (
-    <Box sx={{ display: "inline-flex"}}>
+    <Box sx={{ width: "100%"}}>
       <FormControl sx={{ m: 1, width: 300 }}>
         <InputLabel>Active Rooms</InputLabel>
         <Select
-          value={personName}
+          value={roomID}
           onChange={handleChange}
           input={<OutlinedInput label="Active Rooms" />}
           MenuProps={MenuProps}
         >
-          {defaultRooms.map((name) => (
+          {defaultRooms.map((room) => (
             <MenuItem
-              key={name}
-              value={name}
-              style={getStyles(name, personName, theme)}
+              key={room}
+              value={room}
+              style={getStyles(room, personName, theme)}
             >
               {name}
             </MenuItem>
@@ -75,7 +72,7 @@ export const RoomSelector: React.FC<IRoomSelectorProps> = ( { handleJoinRoom }) 
           variant="contained" 
           startIcon={<Room/>} 
           color="primary"  
-          onClick={handleJoinRoom}
+          onClick={() => handleJoinRoom("roomIdHere")}
         >
           Join Room 
         </Button>

@@ -19,7 +19,7 @@ export type ReadReceiptData = {
   sendToSocketId: string;
   messageId: string;
 }
-export type JoinRoomData = {
+export type RoomData = {
   clientSocketId: string;
   roomId: string;
 }
@@ -35,7 +35,8 @@ export interface IClientToServer {
   sendNewNessage: (data: MessageData) => void;
   sendMsgReceived: (data: MsgReceivedData) => void;
   sendReadReceipt: (data: ReadReceiptData) => void;
-  sendJoinRoom: (data: JoinRoomData) => void;
+  sendJoinRoom: (data: RoomData) => void;
+  sendLeaveRoom: (data: RoomData) => void;
 }
 export interface IServerToClient {
   noArg: () => void;
