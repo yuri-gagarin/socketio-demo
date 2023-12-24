@@ -57,13 +57,13 @@ export const RoomSelector: React.FC<IRoomSelectorProps> = ( { handleJoinRoom }) 
           input={<OutlinedInput label="Active Rooms" />}
           MenuProps={MenuProps}
         >
-          {defaultRooms.map((room) => (
+          {defaultRooms.map((roomName) => (
             <MenuItem
-              key={room}
-              value={room}
-              style={getStyles(room, personName, theme)}
+              key={roomName}
+              value={roomName}
+              style={{ fontWeight: theme.typography.fontWeightMedium }}
             >
-              {name}
+              {roomName}
             </MenuItem>
           ))}
         </Select>

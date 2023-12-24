@@ -1,35 +1,4 @@
-export type NewConnectionData = {
-  message: string;
-  userSocketId: string;
-  connectedSockets: string[];
-  numOfConnections: number;
-}
-export type MessageData = {
-  messageid: string;
-  receiverSocketId: string;
-  senderSocketId: string;
-  messageData: string;
-}
-export type MsgReceivedData = {
-  receivedBySocketId: string;
-  sentFromSocketId: string;
-}
-export type ReadReceiptData = {
-  readBySocketId: string;
-  sendToSocketId: string;
-  messageId: string;
-}
-export type RoomData = {
-  clientSocketId: string;
-  roomId: string;
-}
-export type RoomJoinData = {
-  message: string;
-  clientSocketId: string;
-  roomId: string;
-  roomSize: number;
-  errors: string[] | null;
-}
+import type { NewConnectionData, MessageData, MsgReceivedData, ReadReceiptData, RoomData } from "./dataTypes";
 
 export interface IClientToServer {
   sendNewNessage: (data: MessageData) => void;
@@ -45,6 +14,6 @@ export interface IServerToClient {
   receiveNewMessage: (data: MessageData) => void;
   confirmReceivedMsg: (data: MsgReceivedData) => void;
   receiveReadReceipt: (data: ReadReceiptData) => void;
-  roomJoinSuccess: (data: RoomJoinData) => void;
-  roomJoinFailure: (data: RoomJoinData) => void;
+  roomJoinSuccess: (data: RoomData) => void;
+  roomJoinFailure: (data: RoomData) => void;
 }
